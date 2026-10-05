@@ -1,0 +1,9 @@
+# ==============================================================================
+# TraceHunt - Spark Defaults Configuration Template
+# ==============================================================================
+spark.master                     spark://master:7077
+spark.app.name                   TraceHunt-Distributed-Analytics
+spark.driver.memory              1g
+spark.executor.memory            1g
+spark.executor.cores             2
+spark.sql.shuffle.partitions     4

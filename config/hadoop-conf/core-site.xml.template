@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  TraceHunt - Hadoop core-site.xml Configuration Template
+  Replace 'master' with the hostname or IP of the Master laptop.
+-->
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://master:9000</value>
+        <description>The NameNode URI where the Master coordinates the distributed file system.</description>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/Users/JANVI/hadoop_data/tmp</value>
+        <description>Base directory for temporary Hadoop storage files.</description>
+    </property>
+</configuration>

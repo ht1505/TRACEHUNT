@@ -1,0 +1,37 @@
+{
+  "incident_investigation": {
+    "incident_id": "INC_0001",
+    "location_id": "L005",
+    "location_name": "Grand Bazaar Sector-1",
+    "timestamp": "2026-09-29 14:30:00",
+    "planted_nearby_persons": [
+      "P00023",
+      "P00045",
+      "P00078",
+      "P00102"
+    ]
+  },
+  "impossible_speed_anomalies": [
+    {
+      "person_id": "P00023",
+      "origin_location": "L001",
+      "origin_time": "2026-09-29 10:00:00",
+      "dest_location": "L050",
+      "dest_time": "2026-09-29 10:04:30",
+      "description": "Travelled across city (~28 km) in 4.5 minutes (Speed > 370 km/h)"
+    }
+  ],
+  "crowd_spike_anomalies": [
+    {
+      "location_id": "L003",
+      "location_name": "City Mall Sector-1",
+      "window": "2026-09-29 18:00:00 to 19:00:00",
+      "planted_extra_visitors": 4000,
+      "description": "Sudden anomalous surge 5x above baseline capacity"
+    }
+  ],
+  "correlated_route_persons": [
+    "P00311",
+    "P00312"
+  ]
+}

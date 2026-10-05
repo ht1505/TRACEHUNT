@@ -1,0 +1,20 @@
+# Python virtual environments & bytecode
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# Large generated data outputs (keep sample/ for git)
+output/data/*.csv
+output/mongo_backup/
+
+# Hadoop & Spark temp and logs
+hadoop_data/
+logs/
+*.log
+
+# OS-specific metadata
+.DS_Store
+Thumbs.db

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACEHUNT - Distributed Big Data Event & Movement Investigation System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top App Navigation Header -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">TH</div>
+      <div>
+        <h1 class="brand-title">TRACEHUNT</h1>
+        <p class="brand-subtitle">Distributed Big Data Movement & Incident Investigation System</p>
+      </div>
+    </div>
+
+    <!-- Cluster Nodes Indicator -->
+    <div class="cluster-status-strip">
+      <div class="status-badge status-online">
+        <span class="pulse-dot"></span>
+        <span>HDFS: 2 DataNodes</span>
+      </div>
+      <div class="status-badge status-online">
+        <span class="pulse-dot"></span>
+        <span>Spark: 2 Workers</span>
+      </div>
+      <div class="status-badge status-mongo">
+        <span class="pulse-dot"></span>
+        <span id="dbStatusBadge">MongoDB NoSQL</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <button class="nav-tab active" data-tab="overview">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          System Overview
+        </button>
+        <button class="nav-tab" data-tab="journey">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Journey Reconstruction
+        </button>
+        <button class="nav-tab" data-tab="incident">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Incident Investigation
+        </button>
+        <button class="nav-tab" data-tab="anomalies">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Anomaly Intelligence
+        </button>
+        <button class="nav-tab" data-tab="cluster">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          Cluster Live Status
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p class="role-badge">4th Year BDS Capstone</p>
+        <p class="arch-tag">HDFS + Spark + MongoDB + Flask</p>
+      </div>
+    </aside>
+
+    <!-- Content Workspace -->
+    <main class="content-area">
+
+      <!-- ============================================================ -->
+      <!-- VIEW 1: SYSTEM OVERVIEW -->
+      <!-- ============================================================ -->
+      <section id="view-overview" class="view-panel active">
+        <div class="panel-header">
+          <h2>Cluster System Overview</h2>
+          <p class="panel-desc">Real-time status of distributed storage, analytical compute, and indexed intelligence records.</p>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-title">CITIZENS TRACKED</span>
+            <div class="metric-value" id="valPeople">1,000</div>
+            <span class="metric-note">Master entity profiles</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">MONITORED LOCATIONS</span>
+            <div class="metric-value" id="valLocations">50</div>
+            <span class="metric-note">Transit, commercial, civic</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-title">INCIDENTS LOGGED</span>
+            <div class="metric-value" id="valIncidents">50</div>
+            <span class="metric-note">Ground truth event records</span>
+          </div>
+          <div class="metric-card highlight-metric">
+            <span class="metric-title">DETECTED ANOMALIES</span>
+            <div class="metric-value" id="valAnomalies">--</div>
+            <span class="metric-note">Surges & velocity violations</span>
+          </div>
+        </div>
+
+        <!-- Viva Demonstration Story Guide -->
+        <div class="card-box mt-4">
+          <div class="card-box-header">
+            <h3>Examination Demonstration Scenario</h3>
+            <span class="tag-pill">Viva Reference</span>
+          </div>
+          <p class="card-text">
+            TraceHunt models digital footprints across a metropolis. The raw movement logs are distributed across <strong>Worker 1 and Worker 2</strong> DataNodes in HDFS blocks. PySpark executes distributed window operations and joins to uncover forensic cases:
+          </p>
+          <div class="demo-steps-grid">
+            <div class="demo-step">
+              <span class="step-num">1</span>
+              <h4>Journey Reconstruction</h4>
+              <p>Chronologically reconstructs Person <code>P00023</code> across the city, measuring total transit distance.</p>
+            </div>
+            <div class="demo-step">
+              <span class="step-num">2</span>
+              <h4>Incident Proximity</h4>
+              <p>Investigates <code>INC_0001</code> at Grand Bazaar, identifying people within 150m and ±20 mins.</p>
+            </div>
+            <div class="demo-step">
+              <span class="step-num">3</span>
+              <h4>Crowd Surge Spike</h4>
+              <p>Spark aggregates hourly densities, flagging a 5x activity surge over baseline capacity.</p>
+            </div>
+            <div class="demo-step">
+              <span class="step-num">4</span>
+              <h4>Impossible Velocity</h4>
+              <p>Detects a 370+ km/h teleportation anomaly across 28 km in under 5 minutes for <code>P00023</code>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- VIEW 2: JOURNEY RECONSTRUCTION -->
+      <!-- ============================================================ -->
+      <section id="view-journey" class="view-panel">
+        <div class="panel-header">
+          <h2>Person Journey Reconstruction</h2>
+          <p class="panel-desc">Query distributed movement events to build an audited chronological timeline of citizen transit.</p>
+        </div>
+
+        <div class="search-bar-box">
+          <div class="search-input-group">
+            <label for="personIdInput">Search Person ID:</label>
+            <input type="text" id="personIdInput" placeholder="e.g. P00023" value="P00023">
+            <button class="btn btn-primary" id="btnSearchJourney">Reconstruct Journey</button>
+          </div>
+          <div class="quick-chips">
+            <span class="chip-label">Quick Test Candidates:</span>
+            <button class="chip" onclick="setPerson('P00023')">P00023 (Planted Anomaly)</button>
+            <button class="chip" onclick="setPerson('P00045')">P00045</button>
+            <button class="chip" onclick="setPerson('P00078')">P00078</button>
+            <button class="chip" onclick="setPerson('P00102')">P00102</button>
+          </div>
+        </div>
+
+        <!-- Journey Summary Details -->
+        <div id="journeySummaryCard" class="card-box mt-3" style="display: none;">
+          <div class="journey-header-strip">
+            <div>
+              <h3 id="jPersonName">Person Profile</h3>
+              <p id="jPersonMeta" class="meta-sub">ID: P00023 | Date: 2026-09-29</p>
+            </div>
+            <div class="journey-stats-row">
+              <div class="stat-pill"><span id="jEventCount">0</span> Events</div>
+              <div class="stat-pill"><span id="jDistance">0</span> km Traveled</div>
+            </div>
+          </div>
+
+          <!-- Chronological Timeline List -->
+          <div class="timeline-container mt-3" id="timelineList">
+            <!-- Populated via JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- VIEW 3: INCIDENT INVESTIGATION -->
+      <!-- ============================================================ -->
+      <section id="view-incident" class="view-panel">
+        <div class="panel-header">
+          <h2>Spatial-Temporal Incident Investigation</h2>
+          <p class="panel-desc">Correlates incident coordinates and timestamps with distributed movement events to find nearby individuals.</p>
+        </div>
+
+        <div class="card-box">
+          <div class="search-input-group">
+            <label for="incidentSelect">Select Incident Case:</label>
+            <select id="incidentSelect">
+              <option value="INC_0001">INC_0001 - Grand Bazaar (Theft, High Severity)</option>
+            </select>
+            <button class="btn btn-primary" id="btnLoadIncident">Investigate Case</button>
+          </div>
+        </div>
+
+        <div id="incidentCaseBox" class="card-box mt-3">
+          <div class="incident-case-header">
+            <div>
+              <h3 id="incCaseTitle">Incident Details</h3>
+              <p id="incCaseMeta" class="meta-sub">Location: Grand Bazaar Sector-1 | Time: 2026-09-29 14:30:00</p>
+            </div>
+            <span class="severity-badge high" id="incSeverity">HIGH SEVERITY</span>
+          </div>
+
+          <div class="table-container mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Person ID</th>
+                  <th>Full Name</th>
+                  <th>Occupation</th>
+                  <th>Event Timestamp</th>
+                  <th>Recorded Location</th>
+                  <th>Distance to Incident</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="incidentNearbyTable">
+                <tr><td colspan="7" class="text-center">Click 'Investigate Case' to query records.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- VIEW 4: ANOMALY INTELLIGENCE -->
+      <!-- ============================================================ -->
+      <section id="view-anomalies" class="view-panel">
+        <div class="panel-header">
+          <h2>Forensic Anomaly Intelligence</h2>
+          <p class="panel-desc">Rule-based analytical flags computed across distributed nodes via Spark aggregations.</p>
+        </div>
+
+        <div class="filter-strip">
+          <button class="btn btn-filter active" onclick="filterAnomalies('')">All Anomalies</button>
+          <button class="btn btn-filter" onclick="filterAnomalies('IMPOSSIBLE_MOVEMENT')">Impossible Velocity (Speed Violations)</button>
+          <button class="btn btn-filter" onclick="filterAnomalies('CROWD_ACTIVITY_SPIKE')">Crowd Activity Surges</button>
+        </div>
+
+        <div class="anomalies-list mt-3" id="anomaliesList">
+          <!-- Populated via JavaScript -->
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- VIEW 5: CLUSTER LIVE STATUS -->
+      <!-- ============================================================ -->
+      <section id="view-cluster" class="view-panel">
+        <div class="panel-header">
+          <h2>3-Node Cluster Architecture & Health</h2>
+          <p class="panel-desc">Physical cluster topology and demonstration commands for examiners.</p>
+        </div>
+
+        <div class="cluster-topology-grid">
+          <div class="node-card master-node">
+            <div class="node-header">
+              <span class="node-type">MASTER NODE</span>
+              <span class="node-ip">192.168.x.x / master</span>
+            </div>
+            <ul class="daemon-list">
+              <li><span class="daemon-tag">HDFS</span> NameNode</li>
+              <li><span class="daemon-tag">HDFS</span> SecondaryNameNode</li>
+              <li><span class="daemon-tag">YARN</span> ResourceManager</li>
+              <li><span class="daemon-tag">Spark</span> Spark Master (:7077)</li>
+              <li><span class="daemon-tag">NoSQL</span> MongoDB Daemon (:27017)</li>
+              <li><span class="daemon-tag">API</span> Flask App Server (:5000)</li>
+            </ul>
+          </div>
+
+          <div class="node-card worker-node">
+            <div class="node-header">
+              <span class="node-type">WORKER 1 (STUDENT 2)</span>
+              <span class="node-ip">192.168.x.x / worker1</span>
+            </div>
+            <ul class="daemon-list">
+              <li><span class="daemon-tag">HDFS</span> DataNode</li>
+              <li><span class="daemon-tag">YARN</span> NodeManager</li>
+              <li><span class="daemon-tag">Spark</span> Spark Worker / Executor</li>
+            </ul>
+          </div>
+
+          <div class="node-card worker-node">
+            <div class="node-header">
+              <span class="node-type">WORKER 2 (STUDENT 3)</span>
+              <span class="node-ip">192.168.x.x / worker2</span>
+            </div>
+            <ul class="daemon-list">
+              <li><span class="daemon-tag">HDFS</span> DataNode</li>
+              <li><span class="daemon-tag">YARN</span> NodeManager</li>
+              <li><span class="daemon-tag">Spark</span> Spark Worker / Executor</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-box mt-4">
+          <div class="card-box-header">
+            <h3>Viva Proof Commands (Run on Terminal During Examination)</h3>
+          </div>
+          <div class="command-box">
+            <code># 1. Prove 2 DataNodes are active and healthy:</code>
+            <pre>hdfs dfsadmin -report</pre>
+            
+            <code># 2. Prove data file is split into blocks on worker1 and worker2:</code>
+            <pre>hdfs fsck /tracehunt/raw/movement_events.csv -files -blocks -locations</pre>
+
+            <code># 3. Check active Java daemons on any machine:</code>
+            <pre>jps</pre>
+
+            <code># 4. View Spark Web UI showing 2 live workers:</code>
+            <pre>http://master:8080</pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

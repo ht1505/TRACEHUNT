@@ -1,0 +1,51 @@
+location_id,location_name,location_type,area,latitude,longitude,capacity
+L001,Central Station Sector-1,Healthcare,AREA_SOUTH,21.253333,72.771544,11045
+L002,Tech Park North Sector-1,Residential,AREA_NORTH,21.134758,72.921232,1053
+L003,City Mall Sector-1,Healthcare,AREA_SOUTH,21.208028,72.811029,1132
+L004,University Campus Sector-1,Healthcare,AREA_EAST,21.179943,72.844936,12669
+L005,Grand Bazaar Sector-1,Healthcare,AREA_WEST,21.100789,72.862517,8336
+L006,Civic Hospital Sector-1,Residential,AREA_NORTH,21.246893,72.932321,13653
+L007,Aerodrome Terminal Sector-1,Residential,AREA_WEST,21.117856,72.78954,9903
+L008,Riverside Walk Sector-1,Transport,AREA_CENTRAL,21.217968,72.832976,12247
+L009,Cyber City Sector-1,Entertainment,AREA_NORTH,21.177983,72.860774,4226
+L010,National Library Sector-1,Educational,AREA_WEST,21.108211,72.759188,573
+L011,Sports Complex Sector-1,Transport,AREA_WEST,21.087488,72.925514,2352
+L012,Financial Towers Sector-1,Healthcare,AREA_EAST,21.201211,72.907344,6306
+L013,Old Quarter Market Sector-1,Commercial,AREA_EAST,21.145064,72.788202,12130
+L014,Botanical Gardens Sector-1,Residential,AREA_SOUTH,21.207032,72.917681,11339
+L015,Harbor Port Sector-1,Commercial,AREA_NORTH,21.240377,72.721345,14593
+L016,Suburban Plaza Sector-1,Healthcare,AREA_WEST,21.110608,72.84605,2615
+L017,Central Station Sector-2,Entertainment,AREA_SOUTH,21.232633,72.805869,13103
+L018,Tech Park North Sector-2,Residential,AREA_NORTH,21.100729,72.857787,3832
+L019,City Mall Sector-2,Residential,AREA_NORTH,21.084686,72.753834,12062
+L020,University Campus Sector-2,Commercial,AREA_WEST,21.223773,72.888099,14252
+L021,Grand Bazaar Sector-2,Transport,AREA_SOUTH,21.09538,72.807349,4192
+L022,Civic Hospital Sector-2,Commercial,AREA_CENTRAL,21.243383,72.819499,562
+L023,Aerodrome Terminal Sector-2,Transport,AREA_CENTRAL,21.221639,72.766753,9711
+L024,Riverside Walk Sector-2,Commercial,AREA_CENTRAL,21.194993,72.777708,10799
+L025,Cyber City Sector-2,Healthcare,AREA_CENTRAL,21.091571,72.838116,5758
+L026,National Library Sector-2,Healthcare,AREA_NORTH,21.265714,72.721809,5522
+L027,Sports Complex Sector-2,Entertainment,AREA_NORTH,21.21662,72.733328,13340
+L028,Financial Towers Sector-2,Educational,AREA_NORTH,21.160212,72.727628,4888
+L029,Old Quarter Market Sector-2,Transport,AREA_SOUTH,21.128011,72.877563,14200
+L030,Botanical Gardens Sector-2,Healthcare,AREA_NORTH,21.094135,72.886147,11764
+L031,Harbor Port Sector-2,Healthcare,AREA_CENTRAL,21.277781,72.736542,14163
+L032,Suburban Plaza Sector-2,Transport,AREA_SOUTH,21.182616,72.80992,10375
+L033,Central Station Sector-3,Commercial,AREA_WEST,21.098488,72.761728,8525
+L034,Tech Park North Sector-3,Healthcare,AREA_CENTRAL,21.181646,72.805764,12118
+L035,City Mall Sector-3,Residential,AREA_EAST,21.104778,72.82814,14251
+L036,University Campus Sector-3,Transport,AREA_NORTH,21.129968,72.906485,8533
+L037,Grand Bazaar Sector-3,Commercial,AREA_EAST,21.251022,72.768946,1179
+L038,Civic Hospital Sector-3,Transport,AREA_NORTH,21.074855,72.887101,12366
+L039,Aerodrome Terminal Sector-3,Educational,AREA_EAST,21.111486,72.87994,8090
+L040,Riverside Walk Sector-3,Entertainment,AREA_WEST,21.069276,72.904888,10311
+L041,Cyber City Sector-3,Commercial,AREA_NORTH,21.134427,72.803116,9391
+L042,National Library Sector-3,Transport,AREA_SOUTH,21.060944,72.873278,7098
+L043,Sports Complex Sector-3,Residential,AREA_NORTH,21.153262,72.898682,3233
+L044,Financial Towers Sector-3,Commercial,AREA_NORTH,21.233926,72.795881,2955
+L045,Old Quarter Market Sector-3,Healthcare,AREA_SOUTH,21.231439,72.765447,4871
+L046,Botanical Gardens Sector-3,Educational,AREA_WEST,21.17881,72.919271,14721
+L047,Harbor Port Sector-3,Commercial,AREA_SOUTH,21.141584,72.768071,12156
+L048,Suburban Plaza Sector-3,Residential,AREA_WEST,21.167131,72.846984,6657
+L049,Central Station Sector-4,Healthcare,AREA_SOUTH,21.086201,72.773615,3654
+L050,Tech Park North Sector-4,Residential,AREA_WEST,21.265434,72.872087,12038

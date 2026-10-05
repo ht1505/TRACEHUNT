@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  TraceHunt - Hadoop hdfs-site.xml Configuration Template
+  Sets replication to 2 across the 2 DataNode worker laptops.
+-->
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+        <description>Block replication factor matching the 2 worker DataNodes.</description>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/Users/JANVI/hadoop_data/hdfs/namenode</value>
+        <description>Path on the Master filesystem where the NameNode stores fsimage and edits.</description>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/Users/JANVI/hadoop_data/hdfs/datanode</value>
+        <description>Path on Worker filesystems where raw HDFS data blocks are stored.</description>
+    </property>
+    <property>
+        <name>dfs.blocksize</name>
+        <value>33554432</value>
+        <description>32 MB block size (demonstrates physical block splitting even on test datasets).</description>
+    </property>
+</configuration>
