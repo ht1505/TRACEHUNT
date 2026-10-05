@@ -77,8 +77,11 @@ async function searchJourney() {
 
   try {
     const res = await fetch(`${API_BASE}/api/journey/${personId}`);
-    if (res.ok) {
-      const j = await res.json();
+    const data = await res.json();
+
+    if (res.ok && data && !data.error) {
+      // The API returns the journey document itself, not an array or an envelope.
+      const j = data.journey || data;
       summaryBox.style.display = "block";
       document.getElementById("jPersonName").textContent = `Citizen ${j.person_id} Journey Record`;
       document.getElementById("jPersonMeta").textContent = `Person ID: ${j.person_id} | Date: ${j.date || '2026-09-29'}`;
@@ -103,13 +106,25 @@ async function searchJourney() {
       } else {
         timelineList.innerHTML = `<p class='text-muted'>No individual timeline stops recorded.</p>`;
       }
+    } else if (res.status === 404) {
+      summaryBox.style.display = "block";
+      document.getElementById("jPersonName").textContent = `Citizen ${personId}`;
+      document.getElementById("jPersonMeta").textContent = `Person ID: ${personId}`;
+      document.getElementById("jEventCount").textContent = "0";
+      document.getElementById("jDistance").textContent = "0.0";
+      timelineList.innerHTML = `<p class='text-muted'>No journey data found for ${personId}. Run the available journey analytics pipeline and try again.</p>`;
     } else {
       summaryBox.style.display = "block";
       document.getElementById("jPersonName").textContent = `Citizen ${personId}`;
-      timelineList.innerHTML = `<p class='text-muted'>No journey found for ${personId}. Make sure PySpark journey reconstruction has executed.</p>`;
+      document.getElementById("jPersonMeta").textContent = `Person ID: ${personId}`;
+      timelineList.innerHTML = `<p class='text-muted'>Journey service error${data && data.error ? `: ${data.error}` : ` (HTTP ${res.status})`}. Please try again.</p>`;
     }
   } catch (err) {
     console.error("Journey search error:", err);
+    summaryBox.style.display = "block";
+    document.getElementById("jPersonName").textContent = `Citizen ${personId}`;
+    document.getElementById("jPersonMeta").textContent = `Person ID: ${personId}`;
+    timelineList.innerHTML = `<p class='text-muted'>Unable to load journey data right now. Check the API connection and try again.</p>`;
   }
 }
 
