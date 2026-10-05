@@ -9,6 +9,7 @@ __pycache__/
 # Large generated data outputs (keep sample/ for git)
 output/data/*.csv
 output/mongo_backup/
+output/spark_analytics/
 
 # Hadoop & Spark temp and logs
 hadoop_data/
