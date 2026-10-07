@@ -1,45 +1,127 @@
-#!/usr/bin/env python3
-"""
-TraceHunt - Flask REST API Backend
-Serves investigation endpoints to the Web Dashboard.
-Interacts with MongoDB for low-latency operational data retrieval
-and provides cluster health status.
-"""
+"""TraceHunt Flask API and static dashboard server."""
 
-import os
-import sys
 import json
+import logging
+import os
+import subprocess
+import csv
+from pathlib import Path
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-# Add workspace root to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from mongodb.mongo_client import get_db
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+import sys
 
-app = Flask(__name__, static_folder="../frontend", static_url_path="")
+sys.path.append(str(PROJECT_ROOT))
+from mongodb.mongo_client import get_db, mongo_is_available
+
+logger = logging.getLogger(__name__)
+app = Flask(
+    __name__,
+    static_folder=str(PROJECT_ROOT / "frontend"),
+    static_url_path="",
+)
 CORS(app)
 
 
 def load_fallback_json(collection_name):
-    """Fallback reader if MongoDB is offline during local dev."""
-    backup_path = os.path.join("output", "mongo_backup", f"{collection_name}.json")
-    if os.path.exists(backup_path):
-        with open(backup_path, "r") as f:
-            return json.load(f)
-    return []
+    """Read the local analytics cache used when MongoDB is offline."""
+    backup_path = PROJECT_ROOT / "output" / "mongo_backup" / f"{collection_name}.json"
+    try:
+        if not backup_path.exists():
+            return []
+        with backup_path.open(encoding="utf-8") as stream:
+            data = json.load(stream)
+        return data if isinstance(data, list) else []
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning("Could not read fallback data %s: %s", backup_path, exc)
+        return []
 
 
-# ==============================================================================
-# Static Dashboard Route
-# ==============================================================================
+def load_fallback_people():
+    """Read reference people only when the people collection/cache is absent."""
+    people_path = PROJECT_ROOT / "dataset" / "sample" / "people.csv"
+    try:
+        with people_path.open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+    except (OSError, csv.Error) as exc:
+        logger.warning("Could not read fallback people data %s: %s", people_path, exc)
+        return []
+
+
+def _without_id(document):
+    if document is not None:
+        document.pop("_id", None)
+    return document
+
+
+def _records(collection_name, query=None):
+    db = get_db()
+    if db is not None:
+        return [_without_id(item) for item in db[collection_name].find(query or {}, {"_id": 0})]
+    records = load_fallback_json(collection_name)
+    if collection_name == "people" and not records:
+        records = load_fallback_people()
+    if query:
+        records = [
+            record for record in records
+            if all(record.get(key) == value for key, value in query.items())
+        ]
+    return records
+
+
+def _record(collection_name, query):
+    db = get_db()
+    if db is not None:
+        record = _without_id(db[collection_name].find_one(query, {"_id": 0}))
+        if record is not None:
+            return record
+        if collection_name != "people":
+            return None
+
+    records = load_fallback_json(collection_name)
+    if collection_name == "people" and not records:
+        records = load_fallback_people()
+    return next(
+        (record for record in records
+         if all(record.get(key) == value for key, value in query.items())),
+        None,
+    )
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({"error": "Invalid request", "message": str(error)}), 400
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Resource not found"}), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    logger.exception("Unhandled API error")
+    return jsonify({"error": "Internal server error"}), 500
+
+
 @app.route("/")
 def index():
-    return send_from_directory("../frontend", "index.html")
+    return send_from_directory(str(PROJECT_ROOT / "frontend"), "index.html")
 
 
-# ==============================================================================
-# Overview & System Statistics
-# ==============================================================================
+@app.route("/api/health", methods=["GET"])
+def health():
+    mongo_online = mongo_is_available()
+    payload = {
+        "status": "ok" if mongo_online else "degraded",
+        "backend": "ok",
+        "mongodb": "connected" if mongo_online else "unavailable",
+    }
+    return jsonify(payload), 200 if mongo_online else 503
+
+
 @app.route("/api/overview", methods=["GET"])
 def get_overview():
     db = get_db()
@@ -50,160 +132,117 @@ def get_overview():
             "total_incidents": db.incidents.count_documents({}),
             "total_anomalies": db.anomalies.count_documents({}),
             "total_journeys": db.journeys.count_documents({}),
-            "database_status": "ONLINE (MongoDB Connected)"
+            "database_status": "ONLINE (MongoDB Connected)",
         }
     else:
-        anoms = load_fallback_json("anomalies")
-        incs = load_fallback_json("incidents")
-        journeys = load_fallback_json("journeys")
         stats = {
-            "total_people": 1000,
-            "total_locations": 50,
-            "total_incidents": len(incs) if incs else 50,
-            "total_anomalies": len(anoms) if anoms else 4,
-            "total_journeys": len(journeys) if journeys else 6,
-            "database_status": "LOCAL FALLBACK CACHE"
+            "total_people": len(load_fallback_json("people")) or 1000,
+            "total_locations": len(load_fallback_json("locations")) or 50,
+            "total_incidents": len(load_fallback_json("incidents")) or 50,
+            "total_anomalies": len(load_fallback_json("anomalies")),
+            "total_journeys": len(load_fallback_json("journeys")),
+            "database_status": "LOCAL FALLBACK CACHE",
         }
     return jsonify(stats)
 
 
-# ==============================================================================
-# Person & Journey Investigation
-# ==============================================================================
-@app.route("/api/people/<person_id>", methods=["GET"])
 def get_person(person_id):
-    db = get_db()
-    if db is not None:
-        person = db.people.find_one({"person_id": person_id}, {"_id": 0})
-        if person:
-            return jsonify(person)
-    return jsonify({"person_id": person_id, "name": f"Citizen {person_id}", "status": "Recorded"})
+    if not person_id.strip():
+        return jsonify({"error": "person_id is required"}), 400
+    person = _record("people", {"person_id": person_id})
+    if person is None:
+        return jsonify({"error": f"Person {person_id} not found"}), 404
+    return jsonify(person)
+
+
+app.add_url_rule("/api/person/<person_id>", "get_person", get_person, methods=["GET"])
+app.add_url_rule("/api/people/<person_id>", "get_person_legacy", get_person, methods=["GET"])
 
 
 @app.route("/api/journey/<person_id>", methods=["GET"])
 def get_journey(person_id):
-    db = get_db()
-    if db is not None:
-        journey = db.journeys.find_one({"person_id": person_id}, {"_id": 0})
-        if journey:
-            return jsonify(journey)
-
-    # Check fallback cache
-    journeys = load_fallback_json("journeys")
-    for j in journeys:
-        if j.get("person_id") == person_id:
-            return jsonify(j)
-
-    return jsonify({"error": f"No journey reconstructed yet for {person_id}"}), 404
+    if not person_id.strip():
+        return jsonify({"error": "person_id is required"}), 400
+    journey = _record("journeys", {"person_id": person_id})
+    if journey is None:
+        return jsonify({"error": f"No journey reconstructed yet for {person_id}"}), 404
+    return jsonify(journey)
 
 
-# ==============================================================================
-# Incident Investigation
-# ==============================================================================
 @app.route("/api/incidents", methods=["GET"])
 def list_incidents():
-    db = get_db()
-    if db is not None:
-        incidents = list(db.incidents.find({}, {"_id": 0}))
-        if incidents:
-            return jsonify(incidents)
-
-    # Check fallback cache
-    fallback = load_fallback_json("incidents")
-    if fallback:
-        return jsonify(fallback)
-
-    # If no analyzed cases yet, return sample reference
-    return jsonify([
-        {
-            "incident_id": "INC_0001",
-            "location_name": "Grand Bazaar Sector-1",
-            "timestamp": "2026-09-29 14:30:00",
-            "incident_type": "Theft",
-            "severity": "HIGH",
-            "nearby_records_count": 4,
-            "description": "Reported theft incident at Grand Bazaar."
-        }
-    ])
+    incidents = _records("incidents")
+    if incidents:
+        return jsonify(incidents)
+    return jsonify([{
+        "incident_id": "INC_0001",
+        "location_name": "Grand Bazaar Sector-1",
+        "timestamp": "2026-09-29 14:30:00",
+        "incident_type": "Theft",
+        "severity": "HIGH",
+        "nearby_records_count": 4,
+        "description": "Reported theft incident at Grand Bazaar.",
+    }])
 
 
 @app.route("/api/incidents/<incident_id>", methods=["GET"])
 def get_incident(incident_id):
-    db = get_db()
-    if db is not None:
-        inc = db.incidents.find_one({"incident_id": incident_id}, {"_id": 0})
-        if inc:
-            return jsonify(inc)
-
-    fallback = load_fallback_json("incidents")
-    for inc in fallback:
-        if inc.get("incident_id") == incident_id:
-            return jsonify(inc)
-
-    return jsonify({"error": "Incident not found"}), 404
+    incident = _record("incidents", {"incident_id": incident_id})
+    if incident is None:
+        return jsonify({"error": "Incident not found"}), 404
+    return jsonify(incident)
 
 
-# ==============================================================================
-# Anomaly Intelligence
-# ==============================================================================
 @app.route("/api/anomalies", methods=["GET"])
 def list_anomalies():
-    anomaly_type = request.args.get("type")
-    query = {"type": anomaly_type} if anomaly_type else {}
-
-    db = get_db()
-    if db is not None:
-        anomalies = list(db.anomalies.find(query, {"_id": 0}))
-        if anomalies:
-            return jsonify(anomalies)
-
-    fallback = load_fallback_json("anomalies")
-    if anomaly_type:
-        fallback = [a for a in fallback if a.get("type") == anomaly_type]
-    return jsonify(fallback)
+    query = {}
+    for field in ("type", "severity", "person_id", "location_id"):
+        value = request.args.get(field)
+        if value:
+            query[field] = value
+    return jsonify(_records("anomalies", query))
 
 
-# ==============================================================================
-# Route Similarity
-# ==============================================================================
+@app.route("/api/anomalies/<person_id>", methods=["GET"])
+def list_person_anomalies(person_id):
+    if not person_id.strip():
+        return jsonify({"error": "person_id is required"}), 400
+    return jsonify(_records("anomalies", {"person_id": person_id}))
+
+
 @app.route("/api/routes", methods=["GET"])
 def list_routes():
-    db = get_db()
-    if db is not None:
-        routes = list(db.route_correlations.find({}, {"_id": 0}))
-        if routes:
-            return jsonify(routes)
-    return jsonify(load_fallback_json("route_correlations"))
+    return jsonify(_records("route_correlations"))
 
 
-# ==============================================================================
-# Cluster Health Status (For Viva Demonstration)
-# ==============================================================================
 @app.route("/api/cluster/status", methods=["GET"])
 def cluster_status():
-    import subprocess
     hdfs_report = "Hadoop status not available"
     try:
-        res = subprocess.run(["hdfs", "dfsadmin", "-report"], capture_output=True, text=True, timeout=3)
-        if res.returncode == 0:
-            lines = res.stdout.split("\n")[:10]
-            hdfs_report = "\n".join(lines)
-    except Exception:
-        pass
+        result = subprocess.run(
+            ["hdfs", "dfsadmin", "-report"],
+            capture_output=True,
+            text=True,
+            timeout=3,
+            check=False,
+        )
+        if result.returncode == 0:
+            hdfs_report = "\n".join(result.stdout.splitlines()[:10])
+    except (OSError, subprocess.SubprocessError):
+        logger.info("HDFS status command is unavailable")
 
     return jsonify({
         "cluster_name": "TraceHunt Distributed Cluster",
         "topology": {
             "master": "NameNode, ResourceManager, SparkMaster (192.168.x.x)",
             "worker1": "DataNode, NodeManager, SparkWorker (192.168.x.x)",
-            "worker2": "DataNode, NodeManager, SparkWorker (192.168.x.x)"
+            "worker2": "DataNode, NodeManager, SparkWorker (192.168.x.x)",
         },
         "hdfs_summary": hdfs_report,
-        "spark_master_url": os.environ.get("SPARK_MASTER", "spark://master:7077")
+        "spark_master_url": os.environ.get("SPARK_MASTER", "spark://master:7077"),
     })
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    print(f"[*] Starting TraceHunt Flask API on port {port}...")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

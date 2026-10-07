@@ -1,34 +1,52 @@
 #!/usr/bin/env python3
-"""
-TraceHunt - MongoDB Helper & Sink
-Handles writing processed analytical results into MongoDB collections.
-Includes graceful fallback caching to local JSON files if MongoDB is temporarily offline.
-"""
+"""Shared MongoDB connection and processed-result persistence helpers."""
 
-import os
 import json
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+import logging
+import os
+from pathlib import Path
+from typing import Iterable, Mapping
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
-DB_NAME = "tracehunt_db"
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://127.0.0.1:27017")
+DB_NAME = "tracehunt"
+MONGO_TIMEOUT_MS = int(os.environ.get("MONGO_TIMEOUT_MS", "1500"))
+logger = logging.getLogger(__name__)
+
+_client = None
 
 
 def get_db():
-    """Returns a connected MongoDB database instance, or None if unavailable."""
+    """Return the configured database, or ``None`` when MongoDB is unavailable."""
+    global _client
     try:
-        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
-        client.admin.command('ping')
-        return client[DB_NAME]
-    except (ConnectionFailure, ServerSelectionTimeoutError):
+        if _client is None:
+            _client = MongoClient(
+                MONGO_URI,
+                serverSelectionTimeoutMS=MONGO_TIMEOUT_MS,
+                connectTimeoutMS=MONGO_TIMEOUT_MS,
+            )
+        _client.admin.command("ping")
+        return _client[DB_NAME]
+    except (PyMongoError, ValueError) as exc:
+        logger.warning("MongoDB unavailable: %s", exc)
         return None
 
 
-def upsert_records(collection_name, records, id_field="_id"):
+def mongo_is_available() -> bool:
+    """Return whether the configured MongoDB server responds to a ping."""
+    return get_db() is not None
+
+
+def upsert_records(collection_name: str, records: Iterable[Mapping], id_field="_id"):
     """
     Inserts or updates a list of dictionaries into the designated MongoDB collection.
     If MongoDB is offline, persists to 'output/mongo_backup/<collection_name>.json'.
     """
+    records = [dict(record) for record in records]
     db = get_db()
     if db is not None:
         col = db[collection_name]
@@ -37,12 +55,11 @@ def upsert_records(collection_name, records, id_field="_id"):
                 col.replace_one({id_field: rec[id_field]}, rec, upsert=True)
             else:
                 col.insert_one(rec)
-        print(f"[✔] Persisted {len(records)} records to MongoDB -> '{DB_NAME}.{collection_name}'")
+        print(f"[+] Persisted {len(records)} records to MongoDB -> '{DB_NAME}.{collection_name}'")
     else:
-        # Fallback to local JSON store
-        backup_dir = os.path.join("output", "mongo_backup")
-        os.makedirs(backup_dir, exist_ok=True)
-        backup_file = os.path.join(backup_dir, f"{collection_name}.json")
-        with open(backup_file, "w") as f:
+        backup_dir = PROJECT_ROOT / "output" / "mongo_backup"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_file = backup_dir / f"{collection_name}.json"
+        with backup_file.open("w", encoding="utf-8") as f:
             json.dump(records, f, indent=2, default=str)
         print(f"[!] MongoDB offline; saved {len(records)} records locally to: {backup_file}")

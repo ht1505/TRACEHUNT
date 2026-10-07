@@ -6,7 +6,7 @@ Creates collections and establishes optimized indexes for investigation queries.
 
 import sys
 import os
-from pymongo import MongoClient, ASCENDING, DESCENDING
+from pymongo import ASCENDING, DESCENDING
 
 # Add workspace root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -35,13 +35,14 @@ def init_schema():
     print("[*] Building performance indexes...")
     db.people.create_index([("person_id", ASCENDING)], unique=True)
     db.locations.create_index([("location_id", ASCENDING)], unique=True)
-    db.journeys.create_index([("person_id", ASCENDING)])
+    db.journeys.create_index([("person_id", ASCENDING), ("date", ASCENDING)], unique=True)
     db.journeys.create_index([("date", ASCENDING)])
     db.incidents.create_index([("incident_id", ASCENDING)], unique=True)
     db.incidents.create_index([("timestamp", DESCENDING)])
     db.anomalies.create_index([("type", ASCENDING)])
     db.anomalies.create_index([("severity", ASCENDING)])
     db.anomalies.create_index([("person_id", ASCENDING)])
+    db.anomalies.create_index([("type", ASCENDING), ("severity", ASCENDING)])
     db.anomalies.create_index([("location_id", ASCENDING)])
 
     print("[✔] MongoDB Schema & Indexes Initialized Successfully!")
