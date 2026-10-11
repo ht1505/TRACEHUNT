@@ -359,13 +359,71 @@ unless Spark runs inside `tracehunt-net` or DataNode reachability is
 configured separately. Distributed Spark execution is not claimed by this
 phase.
 
+### Phase 7: Safe final verification
+
+Run the read-only verification harness from the repository root in PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verify_phase7.ps1
+```
+
+The harness checks Git whitespace, Python imports and syntax, Docker container
+and network availability, HDFS safe mode/DataNode/block health, Spark submit
+availability, Windows MongoDB connectivity, and the Flask route contract.
+Each result is reported as `PASS`, `FAIL`, or `SKIP`; the command returns a
+non-zero exit code only when an executable required check fails. It does not
+start or stop services, modify HDFS, write MongoDB records, delete outputs, or
+stage Git files. Flask routes are tested with Flask's in-process test client,
+so this check does not prove that a network listener or browser is running.
+
+The current Docker cluster can read HDFS, but the Windows MongoDB service is
+bound to `127.0.0.1:27017` and is not reachable from `tracehunt-net`.
+The non-destructive harness therefore still skips the full Docker-side
+analytics run. For the verified Phase 7 integration test, an isolated
+MongoDB 8 container was attached only to `tracehunt-net` without a published
+host port, using the separate database `tracehunt_phase7` and a separate
+Docker volume.
+
+The five modules were then submitted with
+`/opt/spark/bin/spark-submit --master spark://hadoop-master:7077` from
+`hadoop-master`, using:
+
+```text
+HDFS_BASE_URL=hdfs://hadoop-master:9000/tracehunt/raw
+HDFS_INPUT_FILES=movement_events.csv,locations.csv,people.csv,incidents.csv
+MONGO_URI=mongodb://tracehunt-mongo:27017
+MONGO_DB_NAME=tracehunt_phase7
+```
+
+Executors registered on both `hadoop-worker1` and `hadoop-worker2`. The
+HDFS-backed run produced 6 journeys, 10 incidents, 1 crowd anomaly, 42,229
+speed anomalies, and 15 route correlations. The isolated database contained
+6, 10, 42,230, and 15 documents respectively, with matching unique `_id`
+counts. The existing `tracehunt` database on Windows was not used by this
+distributed test.
+
+The five analytics modules were also run locally against the sample CSV
+fallback with `SPARK_MASTER=local[2]`, `PYTHONUTF8=1`, and HDFS input disabled.
+Those verified runs persisted 6 journeys, 10 incidents, 42,230 anomaly
+documents (1 crowd result and 42,229 speed results), and 15 route-correlation
+documents to the local `tracehunt` MongoDB database. This proves local Spark
+and MongoDB persistence only; it does not prove that the five modules read
+from HDFS or execute on the Docker Spark workers. `PYTHONUTF8=1` is required
+for the Windows console because the modules print Unicode status markers.
+
 | Step | Command to Run on Terminal | What to Explain to the Examiner |
 |---|---|---|
 | **1. Prove Daemons** | `jps` | "Master runs NameNode and Spark Master. Workers run DataNode and Spark Worker." |
 | **2. Prove 2 DataNodes** | `hdfs dfsadmin -report` | "HDFS explicitly reports Live DataNodes = 2." |
 | **3. Prove HDFS Replication** | `hdfs fsck /tracehunt/raw/movement_events.csv -files -blocks -locations` | "The file has replication factor 2 and replicas on both worker DataNodes." |
-| **4. Prove Spark Execution** | Separate future Spark configuration required | Do not claim Spark is running on this HDFS cluster until it is configured and tested. |
-| **5. Prove Dashboard** | Web Browser: `http://localhost:5000` | "The web dashboard queries MongoDB for real-time investigation records." |
+| **4. Prove Spark Execution** | `docker exec hadoop-master /opt/spark/bin/spark-submit --master spark://hadoop-master:7077 ...` | "Executors registered on both Spark workers." |
+| **5. Prove Dashboard** | Web Browser: `http://127.0.0.1:5050/` | "The Flask dashboard renders real journey, incident, and anomaly records." |
+
+For the browser verification, start the existing Flask app with
+`$env:PORT="5050"; .\.venv\Scripts\python.exe backend\app.py`. The verified
+page loaded the overview, journey, incident, anomaly, and cluster tabs; the
+browser requested the CSS/JavaScript assets and the relevant API calls
+returned HTTP 200. A missing `/favicon.ico` returned 404 and is harmless.
 
 ---
 

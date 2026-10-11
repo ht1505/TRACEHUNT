@@ -19,3 +19,9 @@ logs/
 # OS-specific metadata
 .DS_Store
 Thumbs.db
+
+# Local Spark distribution archive
+spark-3.5.9-bin-hadoop3.tgz
+
+# Generated project structure listing
+structure.txt

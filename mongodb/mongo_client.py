@@ -12,7 +12,7 @@ from pymongo.errors import PyMongoError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://127.0.0.1:27017")
-DB_NAME = "tracehunt"
+DB_NAME = os.environ.get("MONGO_DB_NAME", "tracehunt")
 MONGO_TIMEOUT_MS = int(os.environ.get("MONGO_TIMEOUT_MS", "1500"))
 logger = logging.getLogger(__name__)
 
