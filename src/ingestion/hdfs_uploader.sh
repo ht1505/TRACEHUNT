@@ -22,7 +22,7 @@ if ! command -v hdfs &> /dev/null; then
 fi
 
 echo "[*] Step 1: Checking HDFS connection & creating directory..."
-hdfs dfs -mkdir -p ${HDFS_BASE_DIR}
+hdfs dfs -mkdir -p "${HDFS_BASE_DIR}"
 
 echo "[*] Step 2: Uploading CSV datasets to HDFS..."
 for file in people.csv locations.csv incidents.csv movement_events.csv transactions.csv; do
@@ -36,11 +36,11 @@ done
 
 echo ""
 echo "[*] Step 3: Verifying HDFS contents:"
-hdfs dfs -ls -h ${HDFS_BASE_DIR}
+hdfs dfs -ls -h "${HDFS_BASE_DIR}"
 
 echo ""
 echo "[*] Step 4: Inspecting block distribution across DataNodes:"
-hdfs fsck ${HDFS_BASE_DIR}/movement_events.csv -files -blocks -locations
+hdfs fsck "${HDFS_BASE_DIR}/movement_events.csv" -files -blocks -locations
 
 echo ""
 echo "=========================================================="

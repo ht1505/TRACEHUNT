@@ -12,13 +12,13 @@
     </property>
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>/Users/JANVI/hadoop_data/hdfs/namenode</value>
-        <description>Path on the Master filesystem where the NameNode stores fsimage and edits.</description>
+        <value>file:///opt/hadoop_data/hdfs/namenode</value>
+        <description>Path inside the demo container where the NameNode stores fsimage and edits.</description>
     </property>
     <property>
         <name>dfs.datanode.data.dir</name>
-        <value>/Users/JANVI/hadoop_data/hdfs/datanode</value>
-        <description>Path on Worker filesystems where raw HDFS data blocks are stored.</description>
+        <value>file:///opt/hadoop_data/hdfs/datanode</value>
+        <description>Path inside the demo container where DataNode blocks are stored.</description>
     </property>
     <property>
         <name>dfs.blocksize</name>

@@ -267,12 +267,74 @@ python3 backend/app.py
 
 ## 12. Examiner Demonstration Script & Viva Proofs
 
+### Phase 5: Simple HDFS Docker Demonstration
+
+The existing `hadoop-master`, `hadoop-worker1`, and `hadoop-worker2` containers
+use the Docker network `tracehunt-net`. The Hadoop templates use these
+container hostnames and do not require Docker Compose.
+
+The following commands are run from the repository root in PowerShell. They
+start existing containers only; they do not create or recreate them:
+
+```powershell
+docker start hadoop-master hadoop-worker1 hadoop-worker2
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon start namenode"
+docker exec hadoop-worker1 bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon start datanode"
+docker exec hadoop-worker2 bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon start datanode"
+```
+
+Direct daemon commands are used because the minimal demo containers do not
+run an SSH daemon. No NameNode format is needed after the initial
+initialization.
+
+Check the NameNode and DataNodes:
+
+```powershell
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs dfsadmin -report"
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs dfs -ls /"
+```
+
+Upload and verify the existing sample movement-events CSV:
+
+```powershell
+docker cp .\dataset\sample\movement_events.csv hadoop-master:/tmp/movement_events.csv
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs dfs -mkdir -p /tracehunt/raw; hdfs dfs -put -f /tmp/movement_events.csv /tracehunt/raw/movement_events.csv"
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs dfs -ls -h /tracehunt/raw; hdfs dfs -du -h /tracehunt/raw/movement_events.csv; hdfs fsck /tracehunt/raw/movement_events.csv -files -blocks -locations"
+```
+
+Open the NameNode web UI at `http://localhost:9870/`. The live DataNode
+count is also available from:
+
+```powershell
+curl.exe http://localhost:9870/jmx?qry=Hadoop:service=NameNode,name=FSNamesystem
+```
+
+Look for `"NumLiveDataNodes" : 2`.
+
+The current sample file is smaller than the configured 32 MiB block size, so
+this upload proves HDFS storage and DataNode registration but may use one
+block. It does not by itself prove multi-block splitting.
+
+Stop HDFS services without removing containers:
+
+```powershell
+docker exec hadoop-master bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon stop namenode"
+docker exec hadoop-worker1 bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon stop datanode"
+docker exec hadoop-worker2 bash -lc "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64; export HADOOP_HOME=/opt/hadoop; export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop; export PATH=`$HADOOP_HOME/bin:`$HADOOP_HOME/sbin:`$PATH; hdfs --daemon stop datanode"
+docker stop hadoop-master hadoop-worker1 hadoop-worker2
+```
+
+This HDFS phase only establishes distributed storage. The existing Spark
+analytics modules, MongoDB persistence, Flask APIs, and dashboard remain
+unchanged. Spark must not be described as running on this cluster until a
+separate `spark-submit` configuration has been implemented and tested.
+
 | Step | Command to Run on Terminal | What to Explain to the Examiner |
 |---|---|---|
 | **1. Prove Daemons** | `jps` | "Master runs NameNode and Spark Master. Workers run DataNode and Spark Worker." |
 | **2. Prove 2 DataNodes** | `hdfs dfsadmin -report` | "HDFS explicitly reports Live DataNodes = 2." |
-| **3. Prove Block Split** | `hdfs fsck /tracehunt/raw/movement_events.csv -files -blocks -locations` | "The file is physically split into blocks across worker1 and worker2." |
-| **4. Prove Spark Execution** | Spark UI: `http://master:8080` | "Spark distributes tasks across executors on Worker 1 and Worker 2." |
+| **3. Prove HDFS Replication** | `hdfs fsck /tracehunt/raw/movement_events.csv -files -blocks -locations` | "The file has replication factor 2 and replicas on both worker DataNodes." |
+| **4. Prove Spark Execution** | Separate future Spark configuration required | Do not claim Spark is running on this HDFS cluster until it is configured and tested. |
 | **5. Prove Dashboard** | Web Browser: `http://localhost:5000` | "The web dashboard queries MongoDB for real-time investigation records." |
 
 ---

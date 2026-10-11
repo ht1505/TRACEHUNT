@@ -1,3 +1,4 @@
 # Hadoop DataNode Worker Hostnames (Listed on Master)
-worker1
-worker2
+# These are the existing Docker container hostnames on tracehunt-net.
+hadoop-worker1
+hadoop-worker2
