@@ -329,6 +329,36 @@ analytics modules, MongoDB persistence, Flask APIs, and dashboard remain
 unchanged. Spark must not be described as running on this cluster until a
 separate `spark-submit` configuration has been implemented and tested.
 
+### Phase 6: Spark input integration
+
+The Spark modules preserve their local CSV fallback. To opt the movement
+events input into HDFS, set `HDFS_BASE_URL`; metadata files continue to use
+the local sample files unless they are explicitly included in
+`HDFS_INPUT_FILES`:
+
+```powershell
+$env:HDFS_BASE_URL = "hdfs://localhost:9000/tracehunt/raw"
+$env:HDFS_INPUT_FILES = "movement_events.csv"
+.\.venv\Scripts\python.exe scripts\spark\test_hdfs_input.py --hdfs-base-url $env:HDFS_BASE_URL
+```
+
+The smoke test reports the input path, schema, and row count before any full
+analytics run. `run_all_analytics.sh` forwards `HDFS_BASE_URL` to the existing
+analytics modules:
+
+```bash
+HDFS_BASE_URL=hdfs://<reachable-namenode>:9000/tracehunt/raw \
+./scripts/spark/run_all_analytics.sh
+```
+
+From the Windows host, the NameNode RPC port is reachable through
+`localhost:9000`, but the HDFS block locations currently advertise Docker
+DataNode addresses (`172.20.0.3:9866` and `172.20.0.4:9866`). The Windows
+PySpark smoke test therefore reaches the NameNode but cannot read the block
+unless Spark runs inside `tracehunt-net` or DataNode reachability is
+configured separately. Distributed Spark execution is not claimed by this
+phase.
+
 | Step | Command to Run on Terminal | What to Explain to the Examiner |
 |---|---|---|
 | **1. Prove Daemons** | `jps` | "Master runs NameNode and Spark Master. Workers run DataNode and Spark Worker." |

@@ -1,7 +1,7 @@
 # ==============================================================================
 # TraceHunt - Spark Defaults Configuration Template
 # ==============================================================================
-spark.master                     spark://master:7077
+spark.master                     spark://hadoop-master:7077
 spark.app.name                   TraceHunt-Distributed-Analytics
 spark.driver.memory              1g
 spark.executor.memory            1g

@@ -6,6 +6,7 @@ Supports both distributed cluster execution and local fallback for testing.
 """
 
 import os
+from pathlib import Path
 from pyspark.sql import SparkSession
 
 
@@ -35,20 +36,26 @@ def resolve_data_path(filename, hdfs_host=None):
     """
     Resolves dataset path either from HDFS or local filesystem.
     Priority:
-    1. If HDFS_URL is set in environment or passed (e.g. hdfs://master:9000/tracehunt/raw/)
+    1. If HDFS_URL is set in environment or passed and the file is enabled
+       through HDFS_INPUT_FILES (e.g. hdfs://master:9000/tracehunt/raw/)
     2. Fallback to local 'dataset/sample/' for local development/testing.
     """
     hdfs_base = os.environ.get("HDFS_BASE_URL", "")
-    if hdfs_host:
+    hdfs_files = {
+        item.strip()
+        for item in os.environ.get("HDFS_INPUT_FILES", "movement_events.csv").split(",")
+        if item.strip()
+    }
+    if hdfs_host and filename in hdfs_files:
         return f"{hdfs_host}/tracehunt/raw/{filename}"
-    elif hdfs_base:
+    elif hdfs_base and filename in hdfs_files:
         return f"{hdfs_base.rstrip('/')}/{filename}"
-    else:
-        # Check local paths
-        local_sample = os.path.join("dataset", "sample", filename)
-        if os.path.exists(local_sample):
-            return f"file://{os.path.abspath(local_sample)}"
-        local_output = os.path.join("output", "data", filename)
-        if os.path.exists(local_output):
-            return f"file://{os.path.abspath(local_output)}"
-        return filename
+
+    # Check local paths for metadata files and development fallback.
+    local_sample = Path("dataset") / "sample" / filename
+    if local_sample.exists():
+        return str(local_sample.resolve())
+    local_output = Path("output") / "data" / filename
+    if local_output.exists():
+        return str(local_output.resolve())
+    return filename

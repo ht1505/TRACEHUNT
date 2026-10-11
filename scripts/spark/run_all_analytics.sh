@@ -8,12 +8,17 @@
 set -e
 
 SPARK_TARGET="${1:-${SPARK_MASTER:-local[*]}}"
+HDFS_INPUT_URL="${HDFS_BASE_URL:-}"
 echo "=========================================================="
 echo " TraceHunt: Executing Spark Distributed Analytics Pipeline"
 echo " Master Target: ${SPARK_TARGET}"
+if [ -n "${HDFS_INPUT_URL}" ]; then
+    echo " HDFS Input: ${HDFS_INPUT_URL}"
+fi
 echo "=========================================================="
 
 export SPARK_MASTER="${SPARK_TARGET}"
+export HDFS_BASE_URL="${HDFS_INPUT_URL}"
 
 echo ""
 echo "[1/5] Running Chronological Journey Reconstruction..."
